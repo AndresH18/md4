@@ -40,7 +40,7 @@ public class Ui {
                 var file = fileChooser.getSelectedFile();
                 try {
                     var bytes = Files.readAllBytes(file.toPath());
-                    bytes = md4.engineDigest(bytes);
+                    bytes = md4.digest(bytes);
                     md4Form.getHash().setText(bytesToString(bytes));
                 } catch (IOException ex) {
                     throw new RuntimeException(ex);
@@ -54,7 +54,7 @@ public class Ui {
 
     private void addListeners() {
         md4Form.setTextChanged(s -> {
-            var bytes = md4.engineDigest(s.getBytes());
+            var bytes = md4.digest(s.getBytes());
             md4Form.getHash().setText(bytesToString(bytes));
         });
     }

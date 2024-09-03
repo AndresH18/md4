@@ -13,8 +13,8 @@ public class Md4 {
         engineReset();
     }
 
-    public synchronized byte[] engineDigest(byte[] content) {
-        engineUpdate(content, 0, content.length);
+    public synchronized byte[] digest(byte[] content) {
+        engineUpdate(content, content.length);
 
         final int bufferIndex = (int) (count % BLOCK_LENGTH);
         final int paddingLength = (bufferIndex < 56) ? 56 - bufferIndex : 120 - bufferIndex;
@@ -26,7 +26,7 @@ public class Md4 {
             tail[paddingLength + i] = (byte) ((count * 8) >>> (8 * i));
         }
 
-        engineUpdate(tail, 0, tail.length);
+        engineUpdate(tail, tail.length);
 
         byte[] result = new byte[16];
         for (int i = 0; i < 4; i++) {
@@ -39,38 +39,38 @@ public class Md4 {
         return result;
     }
 
-    private void engineUpdate(byte[] aMessageBytes, int aOffset, int aMessageLength) {
-        if (aOffset < 0 || aMessageLength < 0 || (long) aOffset + aMessageLength > (long) aMessageBytes.length) {
+    private void engineUpdate(byte[] messageBytes, int messageLength) {
+        if (messageLength < 0 || (long) messageLength > (long) messageBytes.length) {
             throw new ArrayIndexOutOfBoundsException("Incorrect arguments for method engineUpdate");
         }
 
         int bufferIndex = (int) (count % BLOCK_LENGTH);
-        count += aMessageLength;
+        count += messageLength;
         final int partialLength = BLOCK_LENGTH - bufferIndex;
         int i = 0;
 
-        if (aMessageLength >= partialLength) {
-            System.arraycopy(aMessageBytes, aOffset, buffer, bufferIndex, partialLength);
+        if (messageLength >= partialLength) {
+            System.arraycopy(messageBytes, 0, buffer, bufferIndex, partialLength);
             transform(buffer, 0);
             i = partialLength;
-            while (i + BLOCK_LENGTH - 1 < aMessageLength) {
-                transform(aMessageBytes, aOffset + i);
+            while (i + BLOCK_LENGTH - 1 < messageLength) {
+                transform(messageBytes, i);
                 i += BLOCK_LENGTH;
             }
             bufferIndex = 0;
         }
 
-        if (i < aMessageLength) {
-            System.arraycopy(aMessageBytes, aOffset + i, buffer, bufferIndex, aMessageLength - i);
+        if (i < messageLength) {
+            System.arraycopy(messageBytes, i, buffer, bufferIndex, messageLength - i);
         }
     }
 
-    private void transform(byte[] aBuffer, int aOffset) {
+    private void transform(byte[] buffer, int offset) {
         for (int i = 0; i < 16; i++) {
-            extra[i] = ((aBuffer[aOffset++] & 0xff)) |
-                       ((aBuffer[aOffset++] & 0xff) << 8) |
-                       ((aBuffer[aOffset++] & 0xff) << 16) |
-                       ((aBuffer[aOffset++] & 0xff) << 24);
+            extra[i] = ((buffer[offset++] & 0xff)) |
+                       ((buffer[offset++] & 0xff) << 8) |
+                       ((buffer[offset++] & 0xff) << 16) |
+                       ((buffer[offset++] & 0xff) << 24);
         }
 
         int a = context[0];
@@ -79,21 +79,21 @@ public class Md4 {
         int d = context[3];
 
         for (int i : List.of(0, 4, 8, 12)) {
-            a = ff(a, b, c, d, extra[i + 0], 3);
+            a = ff(a, b, c, d, extra[i], 3);
             d = ff(d, a, b, c, extra[i + 1], 7);
             c = ff(c, d, a, b, extra[i + 2], 11);
             b = ff(b, c, d, a, extra[i + 3], 19);
         }
 
         for (int i : List.of(0, 1, 2, 3)) {
-            a = gg(a, b, c, d, extra[i + 0], 3);
+            a = gg(a, b, c, d, extra[i], 3);
             d = gg(d, a, b, c, extra[i + 4], 5);
             c = gg(c, d, a, b, extra[i + 8], 9);
             b = gg(b, c, d, a, extra[i + 12], 13);
         }
 
         for (int i : List.of(0, 2, 1, 3)) {
-            a = hh(a, b, c, d, extra[i + 0], 3);
+            a = hh(a, b, c, d, extra[i], 3);
             d = hh(d, a, b, c, extra[i + 8], 9);
             c = hh(c, d, a, b, extra[i + 4], 11);
             b = hh(b, c, d, a, extra[i + 12], 15);
